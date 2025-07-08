@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { io, Socket } from 'socket.io-client';
@@ -26,14 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    if (storedToken) {
-      handleSetToken(storedToken);
-    }
-  }, []);
-
-  const handleSetToken = (newToken: string | null) => {
+  const handleSetToken = useCallback((newToken: string | null) => {
     setToken(newToken);
     if (newToken) {
       localStorage.setItem('authToken', newToken);
@@ -49,10 +42,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem('authToken');
       setUserId(null);
-      socket?.disconnect();
-      setSocket(null);
+      setSocket((socket) => {
+        socket?.disconnect();
+        return null;
+      });
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) {
+      handleSetToken(storedToken);
+    }
+  }, [handleSetToken]);
 
   const logout = () => {
     handleSetToken(null);
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, userId, socket, setToken, logout }}>
+    <AuthContext.Provider value={{ token, userId, socket, setToken: handleSetToken, logout }}>
       {children}
     </AuthContext.Provider>
   );

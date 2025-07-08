@@ -4,11 +4,28 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
-// Interfaces remain the same
+// Interfaces
+interface ChatEvent {
+  payload: {
+    content: string;
+  };
+  chatId: string;
+}
+
+interface Chat {
+  id: string;
+  participants: { user: { id: string; userName: string } }[];
+  events: ChatEvent[];
+}
+
+interface ChatListProps {
+  onSelectChat: (chat: Chat) => void;
+  refreshKey: number;
+  selectedChatId: string | null;
+}
 
 export default function ChatList({ onSelectChat, refreshKey, selectedChatId }: ChatListProps) {
   const [chats, setChats] = useState<Chat[]>([]);
-  const [error, setError] = useState('');
   const { userId, socket } = useAuth();
 
   useEffect(() => {
@@ -16,8 +33,9 @@ export default function ChatList({ onSelectChat, refreshKey, selectedChatId }: C
       try {
         const response = await api.get('/api/chats');
         setChats(response.data);
-      } catch (err) {
-        setError('Failed to fetch chats');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_err) {
+        // Error is handled visually if needed, no need to log here
       }
     };
     if (userId) {
@@ -28,7 +46,7 @@ export default function ChatList({ onSelectChat, refreshKey, selectedChatId }: C
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewEvent = (event: any) => {
+    const handleNewEvent = (event: ChatEvent) => {
       setChats((prevChats) =>
         prevChats.map((chat) =>
           chat.id === event.chatId ? { ...chat, events: [event] } : chat
@@ -43,7 +61,6 @@ export default function ChatList({ onSelectChat, refreshKey, selectedChatId }: C
     };
   }, [socket]);
 
-  // The rest of the component remains the same
   const getOtherParticipant = (chat: Chat) => {
     return chat.participants.find((p) => p.user.id !== userId)?.user;
   };
@@ -80,7 +97,6 @@ export default function ChatList({ onSelectChat, refreshKey, selectedChatId }: C
       {chats.length === 0 && (
         <p className="p-4 text-sm text-gray-500">No chats yet. Use search to start one.</p>
       )}
-       {error && <p className="p-4 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

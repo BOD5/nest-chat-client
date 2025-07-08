@@ -5,21 +5,38 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 
-// Interfaces remain the same
+// Interfaces for our data structures
+interface Sender {
+  id: string;
+  userName:string;
+}
+
+interface ChatEvent {
+  id: string;
+  sender: Sender;
+  chatId: string;
+  payload: {
+    content: string;
+  };
+  createdAt: string;
+}
+
+interface Chat {
+  id: string;
+  participants: { user: { id: string; userName: string } }[];
+}
+
+interface ChatWindowProps {
+  chat: Chat;
+}
 
 export default function ChatWindow({ chat }: ChatWindowProps) {
   const { userId, socket } = useAuth();
   const [events, setEvents] = useState<ChatEvent[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [now, setNow] = useState(Date.now());
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const otherParticipant = chat.participants.find(p => p.user.id !== userId)?.user;
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     setEvents([]); // Clear previous chat messages
@@ -65,7 +82,6 @@ export default function ChatWindow({ chat }: ChatWindowProps) {
     }
   };
 
-  // The JSX part of the component remains the same
   return (
     <div className="flex flex-col flex-auto h-full">
       {/* Chat Header */}
@@ -92,7 +108,7 @@ export default function ChatWindow({ chat }: ChatWindowProps) {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 text-right mt-1">
-                  {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true, now })}
+                  {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
                 </div>
               </div>
             ) : (
@@ -104,7 +120,7 @@ export default function ChatWindow({ chat }: ChatWindowProps) {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 text-left mt-1">
-                  {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true, now })}
+                  {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
                 </div>
               </div>
             )

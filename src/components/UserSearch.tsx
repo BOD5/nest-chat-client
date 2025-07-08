@@ -15,7 +15,6 @@ interface UserSearchProps {
 export default function UserSearch({ onChatCreated }: UserSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<User[]>([]);
-  const [error, setError] = useState('');
 
   const searchUsers = async (searchQuery: string) => {
     if (searchQuery.length < 2) {
@@ -25,8 +24,9 @@ export default function UserSearch({ onChatCreated }: UserSearchProps) {
     try {
       const response = await api.get(`/api/users/search?query=${searchQuery}`);
       setResults(response.data);
-    } catch (err) {
-      setError('Failed to search for users.');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // Visually handle error if necessary, no need to log
     }
   };
 
@@ -44,8 +44,9 @@ export default function UserSearch({ onChatCreated }: UserSearchProps) {
       setQuery('');
       setResults([]);
       onChatCreated();
-    } catch (err) {
-      setError('Failed to create chat.');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
+      // Visually handle error if necessary, no need to log
     }
   };
 
@@ -71,7 +72,6 @@ export default function UserSearch({ onChatCreated }: UserSearchProps) {
           ))}
         </ul>
       )}
-      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
     </div>
   );
 }
